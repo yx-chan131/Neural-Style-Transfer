@@ -1,5 +1,4 @@
 import argparse
-from matplotlib.pyplot import imshow
 import torch
 import torchvision.models as models
 
