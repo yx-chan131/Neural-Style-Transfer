@@ -1,15 +1,16 @@
+import torch
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 from PIL import Image
 
-def image_loader(img, imsize=(512, 512)):
+def image_loader(img, device, imsize=(512, 512)):
     img_transform = transforms.Compose([
         transforms.Resize(imsize),
         transforms.ToTensor()
     ])
     img = Image.open(img)
     tensor = img_transform(img).unsqueeze(0)
-    return tensor
+    return tensor.to(device, torch.float)
     
 def show_image(tensor, title=None):    
     to_img = transforms.ToPILImage()
