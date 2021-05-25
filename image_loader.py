@@ -12,13 +12,15 @@ def image_loader(img, device, imsize=(512, 512)):
     tensor = img_transform(img).unsqueeze(0)
     return tensor.to(device, torch.float)
     
-def show_image(tensor, title=None):    
+def show_image(tensor, title=None, save=False, save_path=None):    
     to_img = transforms.ToPILImage()
-    img = to_img(tensor.cpu().clone().squeeze(0))
+    img = to_img(tensor.cpu().clone().squeeze(0))    
     plt.figure()
     plt.imshow(img)
     if title is not None:
         plt.title(title)
+    if save:
+        plt.savefig(save_path)
     plt.show()
 
 if __name__ == "__main__":
