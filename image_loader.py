@@ -16,11 +16,12 @@ def show_image(tensor, title=None, save=False, save_path=None):
     to_img = transforms.ToPILImage()
     img = to_img(tensor.cpu().clone().squeeze(0))    
     plt.figure()
+    plt.axis('off')
     plt.imshow(img)
     if title is not None:
         plt.title(title)
     if save:
-        plt.savefig(save_path)
+        plt.savefig(save_path, bbox_inches='tight')    
     plt.show()
 
 if __name__ == "__main__":

@@ -16,13 +16,13 @@ def get_args():
                         help='Path to style image')
     parser.add_argument('--use_noise', default=False,
                         help='Use white noise as input image')
-    parser.add_argument('--num_steps', default=300, help='Number of iterations')
-    parser.add_argument('--style_weight', default=1000000, 
+    parser.add_argument('--num_steps', default=300, type=int, help='Number of iterations')
+    parser.add_argument('--style_weight', default=1000000, type=int,
                         help='Weighting factor for style reconstruction')
-    parser.add_argument('--content_weight', default=1, 
+    parser.add_argument('--content_weight', default=1, type=int,
                         help='Weighting factor for content reconstruction')
     parser.add_argument('--output_path', default='images\output_img.png')
-    parser.add_argument('--save_anim', default=True, help='Save training process as animation')
+    parser.add_argument('--save_anim', default=False, help='Save training process as animation')
     args = parser.parse_args()
     return args
 
@@ -55,8 +55,8 @@ def run_style_transfer(args):
     optimizer = get_input_optimizer(input_img)
 
     print('Optimizing..')
-    run = 0
-    input_img.data.clamp_(0, 1) # correct the values of updated input image
+    run = 0    
+    
     while run < args.num_steps:
         def closure():
             """
@@ -66,7 +66,14 @@ def run_style_transfer(args):
             return it. (Refer to https://pytorch.org/docs/stable/optim.html)
 
             Update the parameters by optimizer.step(closure)
-            """           
+            """   
+            input_img.data.clamp_(0, 1) # correct the values of updated input image
+
+            nonlocal run # enable rebinding of a nonlocal name
+                         # https://stackoverflow.com/questions/2609518/unboundlocalerror-with-nested-function-scopes
+            if args.save_anim and run%10==0:
+                anim_lst.append(input_img.cpu().clone()) 
+
             optimizer.zero_grad()
             model(input_img)
             style_score = 0
@@ -82,9 +89,7 @@ def run_style_transfer(args):
 
             total_loss = style_score + content_score     
             total_loss.backward()
-
-            nonlocal run # enable rebinding of a nonlocal name
-                         # https://stackoverflow.com/questions/2609518/unboundlocalerror-with-nested-function-scopes
+            
             run += 1
             if run % 25 == 0:
                 print("run {}".format(run))
@@ -94,13 +99,13 @@ def run_style_transfer(args):
                 print()
 
             return total_loss
-
+        
         optimizer.step(closure)
-        input_img.data.clamp_(0, 1) 
-        if args.save_anim and run % 10 == 0:
-            anim_lst.append(input_img)          
-    
-    if args.save_anim:
+
+    input_img.data.clamp_(0, 1) 
+        
+    if args.save_anim:   
+        anim_lst.append(input_img.cpu().clone())        
         animate(anim_lst, 'images\output.gif')
     show_image(input_img, title='Output Image', save=True, save_path=args.output_path)
 
