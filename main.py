@@ -3,6 +3,7 @@ import torch
 import torchvision.models as models
 
 from image_loader import image_loader, show_image
+from animate import animate
 from optimizer import get_input_optimizer
 from model import get_style_model_and_losses
 
@@ -21,6 +22,7 @@ def get_args():
     parser.add_argument('--content_weight', default=1, 
                         help='Weighting factor for content reconstruction')
     parser.add_argument('--output_path', default='images\output_img.png')
+    parser.add_argument('--save_anim', default=True, help='Save training process as animation')
     args = parser.parse_args()
     return args
 
@@ -45,6 +47,7 @@ def run_style_transfer(args):
     style_img = image_loader(args.style_img, device)
     content_img = image_loader(args.content_img, device)
     input_img = get_input_img(content_img, device, use_noise=args.use_noise)
+    anim_lst = []
 
     model, style_losses, content_losses = get_style_model_and_losses(model, 
                                                                     style_img, 
@@ -53,6 +56,7 @@ def run_style_transfer(args):
 
     print('Optimizing..')
     run = 0
+    input_img.data.clamp_(0, 1) # correct the values of updated input image
     while run < args.num_steps:
         def closure():
             """
@@ -62,10 +66,7 @@ def run_style_transfer(args):
             return it. (Refer to https://pytorch.org/docs/stable/optim.html)
 
             Update the parameters by optimizer.step(closure)
-            """
-            # correct the values of updated input image
-            input_img.data.clamp_(0, 1)
-
+            """           
             optimizer.zero_grad()
             model(input_img)
             style_score = 0
@@ -95,8 +96,12 @@ def run_style_transfer(args):
             return total_loss
 
         optimizer.step(closure)
-
-    input_img.data.clamp_(0, 1)
+        input_img.data.clamp_(0, 1) 
+        if args.save_anim and run % 10 == 0:
+            anim_lst.append(input_img)          
+    
+    if args.save_anim:
+        animate(anim_lst, 'images\output.gif')
     show_image(input_img, title='Output Image', save=True, save_path=args.output_path)
 
 
